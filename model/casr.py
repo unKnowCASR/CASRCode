@@ -4,12 +4,12 @@ from model import common
 
 
 def make_model(opt):
-    return DRN(opt)
+    return CASR(opt)
 
 
-class DRN(nn.Module):
+class CASR(nn.Module):
     def __init__(self, opt, conv=common.default_conv):
-        super(DRN, self).__init__()
+        super(CASR, self).__init__()
         self.opt = opt
         self.scale = opt.scale
         self.phase = len(opt.scale)
@@ -48,13 +48,11 @@ class DRN(nn.Module):
             ) for _ in range(n_blocks)
         ])
 
-        # The fisrt upsample block
         up = [[
             common.Upsampler(conv, 2, n_feats * pow(2, self.phase), act=False),
             conv(n_feats * pow(2, self.phase), n_feats * pow(2, self.phase - 1), kernel_size=1)
         ]]
 
-        # The rest upsample blocks
         for p in range(self.phase - 1, 0, -1):
             up.append([
                 common.Upsampler(conv, 2, 2 * n_feats * pow(2, p), act=False),
@@ -67,7 +65,6 @@ class DRN(nn.Module):
                 nn.Sequential(*up_body_blocks[idx], *up[idx])
             )
 
-        # tail conv that output sr imgs
         tail = [conv(n_feats * pow(2, self.phase), opt.n_colors, kernel_size)]
         for p in range(self.phase, 0, -1):
             tail.append(
@@ -78,29 +75,26 @@ class DRN(nn.Module):
         self.add_mean = common.MeanShift(opt.rgb_range, rgb_mean, rgb_std, 1)
 
     def forward(self, x):
-        # upsample x to target sr size
+
         x = self.upsample(x)
 
-        # preprocess
         x = self.sub_mean(x)
         x = self.head(x)
 
-        # down phases,
         copies = []
         for idx in range(self.phase):
             copies.append(x)
             x = self.down[idx](x)
 
-        # up phases
         sr = self.tail[0](x)
         sr = self.add_mean(sr)
         results = [sr]
         for idx in range(self.phase):
-            # upsample to SR features
+
             x = self.up_blocks[idx](x)
-            # concat down features and upsample features
+
             x = torch.cat((x, copies[self.phase - idx - 1]), 1)
-            # output sr imgs
+
             sr = self.tail[idx + 1](x)
             sr = self.add_mean(sr)
 

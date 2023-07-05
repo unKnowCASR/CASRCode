@@ -2,7 +2,7 @@ import argparse
 import utility
 import numpy as np
 
-parser = argparse.ArgumentParser(description='DRN')
+parser = argparse.ArgumentParser(description='CASR')
 
 parser.add_argument('--n_threads', type=int, default=6,
                     help='number of threads for data loading')
@@ -14,9 +14,9 @@ parser.add_argument('--seed', type=int, default=1,
                     help='random seed')
 parser.add_argument('--data_dir', type=str, default='dataset',
                     help='dataset directory')
-parser.add_argument('--data_train', type=str, default='DIV2K',
+parser.add_argument('--data_train', type=str, default='VCTK',
                     help='train dataset name')
-parser.add_argument('--data_test', type=str, default='Set5',
+parser.add_argument('--data_test', type=str, default='vctk',
                     help='test dataset name')
 parser.add_argument('--data_range', type=str, default='1-800/801-810',
                     help='train/test data range')
@@ -30,7 +30,7 @@ parser.add_argument('--n_colors', type=int, default=3,
                     help='number of color channels to use')
 parser.add_argument('--no_augment', action='store_true',
                     help='do not use data augmentation')
-parser.add_argument('--model', help='model name: DRN-S | DRN-L', required=True)
+parser.add_argument('--model', help='model name: CASR-S | CASR-L', required=True)
 parser.add_argument('--pre_train', type=str, default='.',
                     help='pre-trained model directory')
 parser.add_argument('--pre_train_dual', type=str, default='.',
@@ -81,7 +81,7 @@ args = parser.parse_args()
 utility.init_model(args)
 
 # scale = [2,4] for 4x SR to load data
-# scale = [2,4,8] for 8x SR to load data
+
 args.scale = [pow(2, s+1) for s in range(int(np.log2(args.scale)))]
 
 for arg in vars(args):

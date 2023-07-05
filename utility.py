@@ -121,8 +121,8 @@ def make_dual_scheduler(opt, dual_optimizers):
 
 
 def init_model(args):
-    # Set the templates here
-    if args.model.find('DRN-S') >= 0:
+
+    if args.model.find('CASR-S') >= 0:
         if args.scale == 4:
             args.n_blocks = 30
             args.n_feats = 16
@@ -133,7 +133,7 @@ def init_model(args):
             print('Use defaults n_blocks and n_feats.')
         args.dual = True
 
-    if args.model.find('DRN-L') >= 0:
+    if args.model.find('CASR-L') >= 0:
         if args.scale == 4:
             args.n_blocks = 40
             args.n_feats = 20

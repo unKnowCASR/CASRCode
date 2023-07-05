@@ -8,18 +8,9 @@ from tensorflow.keras.losses import MeanSquaredError
 import numpy as np
 import tensorflow as tf
 
-# Modeify grapy
-# update loss
-# combined loss
-# reconstruction loss (MSE)
-# KL loss
-
 tf.compat.v1.disable_eager_execution()
 
 class VAE:
-    """
-    Autoencoder 深度卷积自编码器架构 -- 编码器和解码器
-    """
 
     def __init__(self,
                  input_shape,
@@ -27,11 +18,11 @@ class VAE:
                  conv_kernels,
                  conv_strides,
                  latent_space_dim):
-        self.input_shape = input_shape    # [28,28,1]
-        self.conv_filters = conv_filters  # [2,4,8]
-        self.conv_kernels = conv_kernels  # [3,5,3]
-        self.conv_strides = conv_strides  # [1,2,2]
-        self.latent_space_dim = latent_space_dim  # 2
+        self.input_shape = input_shape
+        self.conv_filters = conv_filters
+        self.conv_kernels = conv_kernels
+        self.conv_strides = conv_strides
+        self.latent_space_dim = latent_space_dim
         self.reconstruction_loss_weight = 1000000
 
         self.encoder = None
@@ -43,7 +34,6 @@ class VAE:
         self._modle_input = None
 
         self._build()
-# 打印信息
     def summary(self):
         self.encoder.summary()
         self.decoder.summary()
@@ -68,11 +58,10 @@ class VAE:
     def load_weights(self, weights_path):
         self.model.load_weights(weights_path)
 
-    # 将潜在表示传给解码器
     def reconstruct(self, images):
-        # 让图像通过编码器并获得所有这些图像的潜在表示作为输出
+
         latent_representations = self.encoder.predict(images)
-        # 将潜在表示传递到解码器中
+
         reconstructed_images = self.decoder.predict(latent_representations)
         return reconstructed_images, latent_representations
 
@@ -136,15 +125,15 @@ class VAE:
 
 
     def _build_decoder(self):
-        # 解码器的输入
+
         decoder_input = self._add_decoder_input()
-        # 密集层
+
         dense_layer = self._add_dense_layers(decoder_input)
-        # 重构层
+
         reshape_layer = self._add_reshape_layer(dense_layer)
-        # 转置卷积层
+
         conv_transpose_layers = self._add_conv_transpose_layers(reshape_layer)
-        # 解码器输出
+
         decoder_output = self._add_decoder_output(conv_transpose_layers)
         self.decoder = Model(decoder_input, decoder_output, name="decoder")
 
@@ -152,7 +141,7 @@ class VAE:
         return Input(shape=self.latent_space_dim, name="decoder_input")
 
     def _add_dense_layers(self, decoder_input):
-        num_neurons = np.prod(self._shape_before_bottleneck)  # [1,2,4]->8
+        num_neurons = np.prod(self._shape_before_bottleneck)
         dense_layer = Dense(num_neurons, name="decoder_dense")(decoder_input)
         return dense_layer
 
@@ -160,10 +149,9 @@ class VAE:
         return Reshape(self._shape_before_bottleneck)(dense_layer)
 
     def _add_conv_transpose_layers(self, x):
-        """添加转置卷积块"""
-        # 相反的顺序循环遍历
+
         for layer_index in reversed(range(1, self._num_conv_layers)):
-            # [0,1,2] -> [2,1,0]  => [1,2] -> [2,1]
+
             x = self._add_conv_transpose_layer(layer_index, x)
         return x
 
@@ -183,7 +171,7 @@ class VAE:
 
     def _add_decoder_output(self, x):
         conv_transpose_layer = Conv2DTranspose(
-            filters=1, #[24,24,1]
+            filters=1,
             kernel_size=self.conv_kernels[0],
             strides=self.conv_strides[0],
             padding="same",
@@ -204,16 +192,14 @@ class VAE:
         return Input(shape=self.input_shape, name="encoder_input")
 
     def _add_conv_layers(self, encoder_input):
-        """创建所有编码器卷积块"""
+
         x = encoder_input
         for layer_index in range(self._num_conv_layers):
             x = self._add_conv_layer(layer_index, x)
         return x
 
     def _add_conv_layer(self, layer_index, x):
-        """在层图上添加一个卷积块
-                conv2d + ReLU + batch normalization
-                """
+
         layer_number = layer_index + 1
         conv_layer = Conv2D(
             filters=self.conv_filters[layer_index],
@@ -228,17 +214,15 @@ class VAE:
         return x
 
     def _add_bottleneck(self, x):
-        """Flatten data and add bottleneck with guassian sampling"""
-        self._shape_before_bottleneck = K.int_shape(x)[1:]  #[2,7,7,32]
+
+        self._shape_before_bottleneck = K.int_shape(x)[1:]
         x = Flatten()(x)
-        # 两个密集层，一个代表最小向量，另一个代表最小向量对数的方差
-        # 最小向量的维度=潜在空间的维度
         self.mu = Dense(self.latent_space_dim, name="mu")(x)
-        # 方差，维度=潜在空间的维度
+
         self.log_varience = Dense(self.latent_space_dim, name="log_variance")(x)
         def sample_point_from_normal_distribution(args):
             mu, log_variance = args
-            # 从正态分布中采样一个点
+
             epsilon = K.random_normal(shape=K.shape(self.mu), mean=0., stddev=1.)
             sampled_point = mu + K.exp(log_variance / 2) * epsilon
             return sampled_point

@@ -1,7 +1,6 @@
 from importlib import import_module
 from torch.utils.data import DataLoader
 
-
 class Data:
     def __init__(self, args):
         self.loader_train = None
@@ -16,7 +15,7 @@ class Data:
                 pin_memory=not args.cpu
             )
 
-        if args.data_test in ['Set5', 'Set14', 'B100', 'Urban100', 'Spec', 'spect']:
+        if args.data_test in ['vctk', 'piano', 'shipsear']:
             module_test = import_module('data.benchmark')
             testset = getattr(module_test, 'Benchmark')(args, name=args.data_test, train=False)
         else:

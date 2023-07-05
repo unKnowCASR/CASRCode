@@ -5,9 +5,6 @@ import numpy as np
 
 
 class Autoencoder:
-    """
-    Autoencoder 深度卷积自编码器架构 -- 编码器和解码器
-    """
 
     def __init__(self,
                  input_shape,
@@ -15,11 +12,11 @@ class Autoencoder:
                  conv_kernels,
                  conv_strides,
                  latent_space_dim):
-        self.input_shape = input_shape    # [28,28,1]
-        self.conv_filters = conv_filters  # [2,4,8]
-        self.conv_kernels = conv_kernels  # [3,5,3]
-        self.conv_strides = conv_strides  # [1,2,2]
-        self.latent_space_dim = latent_space_dim # 2
+        self.input_shape = input_shape
+        self.conv_filters = conv_filters
+        self.conv_kernels = conv_kernels
+        self.conv_strides = conv_strides
+        self.latent_space_dim = latent_space_dim
 
         self.encoder = None
         self.decoder = None
@@ -29,7 +26,7 @@ class Autoencoder:
         self._shape_before_bottleneck = None
 
         self._build()
-# 打印信息
+
     def summary(self):
         self.encoder.summary()
         self.decoder.summary()
@@ -38,18 +35,18 @@ class Autoencoder:
     def _build(self):
         self._build_encoder()
         self._build_decoder()
-        # self._build_autoencoder()
+
 
     def _build_decoder(self):
-        # 解码器的输入
+
         decoder_input = self._add_decoder_input()
-        # 密集层
+
         dense_layer = self._add_dense_layers(decoder_input)
-        # 重构层
+
         reshape_layer = self._add_reshape_layer(dense_layer)
-        # 转置卷积层
+
         conv_transpose_layers = self._add_conv_transpose_layers(reshape_layer)
-        # 解码器输出
+
         decoder_output = self._add_decoder_output(conv_transpose_layers)
         self.decoder = Model(decoder_input, decoder_output, name="decoder")
 
@@ -57,7 +54,7 @@ class Autoencoder:
         return Input(shape=self.latent_space_dim, name="decoder_input")
 
     def _add_dense_layers(self, decoder_input):
-        num_neurons = np.prod(self._shape_before_bottleneck)  # [1,2,4]->8
+        num_neurons = np.prod(self._shape_before_bottleneck)
         dense_layer = Dense(num_neurons, name="decoder_dense")(decoder_input)
         return dense_layer
 
@@ -65,10 +62,9 @@ class Autoencoder:
         return Reshape(self._shape_before_bottleneck)(dense_layer)
 
     def _add_conv_transpose_layers(self, x):
-        """添加转置卷积块"""
-        # 相反的顺序循环遍历
+
+
         for layer_index in reversed(range(1, self._num_conv_layers)):
-            # [0,1,2] -> [2,1,0]  => [1,2] -> [2,1]
             x = self._add_conv_transpose_layer(layer_index, x)
         return x
 
@@ -88,7 +84,7 @@ class Autoencoder:
 
     def _add_decoder_output(self, x):
         conv_transpose_layer = Conv2DTranspose(
-            filters=1, #[24,24,1]
+            filters=1,
             kernel_size=self.conv_kernels[0],
             strides=self.conv_strides[0],
             padding="same",
@@ -108,16 +104,14 @@ class Autoencoder:
         return Input(shape=self.input_shape, name="encoder_input")
 
     def _add_conv_layers(self, encoder_input):
-        """创建所有编码器卷积块"""
+
         x = encoder_input
         for layer_index in range(self._num_conv_layers):
             x = self._add_conv_layer(layer_index, x)
         return x
 
     def _add_conv_layer(self, layer_index, x):
-        """在层图上添加一个卷积块
-                conv2d + ReLU + batch normalization
-                """
+
         layer_number = layer_index + 1
         conv_layer = Conv2D(
             filters=self.conv_filters[layer_index],
@@ -132,8 +126,8 @@ class Autoencoder:
         return x
 
     def _add_bottleneck(self, x):
-        """Flatten data and add bottleneck"""
-        self._shape_before_bottleneck = K.int_shape(x)[1:]  #[2,7,7,32]
+
+        self._shape_before_bottleneck = K.int_shape(x)[1:]
         x = Flatten()(x)
         x = Dense(self.latent_space_dim, name="encoder_output")(x)
         return x

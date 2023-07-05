@@ -66,8 +66,8 @@ class SRData(data.Dataset):
 
     def _set_filesystem(self, data_dir):
         self.apath = os.path.join(data_dir, self.name)
-        self.dir_hr = os.path.join(self.apath, 'DIV2K_train_HR')
-        self.dir_lr = os.path.join(self.apath, 'DIV2K_train_LR_bicubic/X4')
+        self.dir_hr = os.path.join(self.apath, 'VCTK_train_HR')
+        self.dir_lr = os.path.join(self.apath, 'VCTK_train_LR_bicubic/X4')
         self.ext = ('.png', '.png')
 
     def _get_index(self, idx):

@@ -3,15 +3,7 @@ import numpy as np
 import os
 import pickle
 
-# 1.加载文件
-# 2.pad the signal
-# 3.提取对数谱图
-# 4.归一化
-# 5.保存归一化的谱图
-
 class Loader:
-    # 加载音频文件
-    # 采样率，持续时间，单声道
     def __init__(self, sample_rate, duration, mono):
         self.sample_rate = sample_rate
         self.duration = duration
@@ -25,43 +17,43 @@ class Loader:
         return signal
 
 class Padder:
-    # 负责将填充应用于数组
+
     def __init__(self, mode="constant"):
         self.mode = mode
 
     def left_pad(self, array, num_missing_items):
-        # 左填充
+
         padded_array = np.pad(array,(num_missing_items, 0),mode=self.mode)
         return padded_array
 
     def right_pad(self, array, num_missing_items):
-        # 右填充
+
         padded_array = np.pad(array, (num_missing_items, 0), mode=self.mode)
         return padded_array
 
 class LogSpectrogramExtractor:
-    # 从时间序列信号中提取对数频谱图
+
     def __init__(self, frame_size, hop_length):
         self.frame_size = frame_size
         self.hop_length = hop_length
 
     def extract(self, signal):
-        # 短时傅里叶变换
+
         stft = librosa.stft(signal,n_fft=self.frame_size,hop_length=self.hop_length)[:-1]
-        # (1 + frame_size / 2, num_frames) 1024 -> 513 -> 512
+
         spectrogram = np.abs(stft)
         log_spectrogram = librosa.amplitude_to_db(spectrogram)
         return  log_spectrogram
 
 class MinMaxNormaliser:
-    # 归一化，压缩到一个范围
+
     def __init__(self, min_val, max_val):
         self.min = min_val
         self.max = max_val
 
     def normalise(self, array):
         norm_array = (array - array.min()) / (array.max() - array.min())
-        # [0,1]
+
         norm_array = norm_array * (self.max - self.min) + self.min
         return norm_array
 
@@ -71,7 +63,6 @@ class MinMaxNormaliser:
         return array
 
 class Saver:
-    # 负责保存特征和最小最大值
     def __init__(self, feature_save_dir, min_max_values_save_dir):
         self.feature_save_dir = feature_save_dir
         self.min_max_values_save_dir = min_max_values_save_dir
@@ -81,7 +72,6 @@ class Saver:
         np.save(save_path, feature)
         return save_path
 
-    # 重构必须要有原始信号的最大值和最小值
     def save_min_max_values(self, min_max_values):
         save_path = os.path.join(self.min_max_values_save_dir, "min_max_values.pkl")
         self._save(min_max_values, save_path)
@@ -97,8 +87,6 @@ class Saver:
         return save_path
 
 class PreprocessingPipeline:
-    # 预处理音频文件
-    # 存储对于所有日志频谱图的最大值最小值
 
     def __init__(self):
         self.padder = None

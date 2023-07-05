@@ -5,16 +5,15 @@ import torch
 
 
 def get_patch(*args, patch_size=96, scale=[2], multi_scale=False):
-    th, tw = args[-1].shape[:2] # target images size
+    th, tw = args[-1].shape[:2]
 
-    tp = patch_size  # patch size of target hr image
-    ip = [patch_size // s for s in scale] # patch size of lr images
+    tp = patch_size
+    ip = [patch_size // s for s in scale]
 
-    # tx and ty are the top  and left coordinate of the patch 
     tx = random.randrange(0, tw - tp + 1)
     ty = random.randrange(0, th - tp + 1)
-    tx, ty = tx- tx % scale[0], ty - ty % scale[0]
-    ix, iy = [ tx // s for s in scale], [ty // s for s in scale]
+    tx, ty = tx - tx % scale[0], ty - ty % scale[0]
+    ix, iy = [tx // s for s in scale], [ty // s for s in scale]
    
     lr = [args[0][i][iy[i]:iy[i] + ip[i], ix[i]:ix[i] + ip[i], :] for i in range(len(scale))]
     hr = args[-1][ty:ty + tp, tx:tx + tp, :]

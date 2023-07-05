@@ -4,9 +4,6 @@ from tensorflow.keras import backend as K
 
 
 class Autoencoder:
-    """
-    Autoencoder 深度卷积自编码器架构 -- 编码器和解码器
-    """
 
     def __init__(self,
                  input_shape,
@@ -14,11 +11,11 @@ class Autoencoder:
                  conv_kernels,
                  conv_strides,
                  latent_space_dim):
-        self.input_shape = input_shape    # [28,28,1]
-        self.conv_filters = conv_filters  # [2,4,8]
-        self.conv_kernels = conv_kernels  # [3,5,3]
-        self.conv_strides = conv_strides  # [1,2,2]
-        self.latent_space_dim = latent_space_dim # 2
+        self.input_shape = input_shape
+        self.conv_filters = conv_filters
+        self.conv_kernels = conv_kernels
+        self.conv_strides = conv_strides
+        self.latent_space_dim = latent_space_dim
 
         self.encoder = None
         self.decoder = None
@@ -28,7 +25,7 @@ class Autoencoder:
         self._shape_before_bottleneck = None
 
         self._build()
-# 打印信息
+
     def summary(self):
         self.encoder.summary()
 
@@ -47,16 +44,14 @@ class Autoencoder:
         return Input(shape=self.input_shape, name="encoder_input")
 
     def _add_conv_layers(self, encoder_input):
-        """创建所有编码器卷积块"""
+
         x = encoder_input
         for layer_index in range(self._num_conv_layers):
             x = self._add_conv_layer(layer_index, x)
         return x
 
     def _add_conv_layer(self, layer_index, x):
-        """在层图上添加一个卷积块
-        conv2d + ReLU + batch normalization
-        """
+
         layer_number = layer_index + 1
         conv_layer = Conv2D(
             filters=self.conv_filters[layer_index],
@@ -71,8 +66,8 @@ class Autoencoder:
         return x
 
     def _add_bottleneck(self, x):
-        """Flatten data and add bottleneck"""
-        self._shape_before_bottleneck = K.int_shape(x)[1:]  #[2,7,7,32]
+
+        self._shape_before_bottleneck = K.int_shape(x)[1:]
         x = Flatten()(x)
         x = Dense(self.latent_space_dim, name="encoder_output")(x)
         return x

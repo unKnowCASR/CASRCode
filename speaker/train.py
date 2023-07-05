@@ -15,7 +15,6 @@ def load_fsdd(spectrograms_path):
             spectrogram = np.load(file_path)
             x_train.append(spectrogram)
     x_train = np.array(x_train)
-    # (3000,256,64,1)
     x_train = x_train[..., np.newaxis]
     return x_train
 

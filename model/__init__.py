@@ -3,8 +3,7 @@ import math
 import torch
 import torch.nn as nn
 from model.common import DownBlock
-import model.drn
-
+import model.casr
 
 def dataparallel(model, gpu_list):
     ngpus = len(gpu_list)
@@ -31,7 +30,7 @@ class Model(nn.Module):
         self.device = torch.device('cpu' if opt.cpu else 'cuda')
         self.n_GPUs = opt.n_GPUs
 
-        self.model = drn.make_model(opt).to(self.device)
+        self.model = casr.make_model(opt).to(self.device)
         self.dual_models = []
         for _ in self.opt.scale:
             dual_model = DownBlock(opt, 2).to(self.device)
@@ -46,8 +45,7 @@ class Model(nn.Module):
         if not opt.test_only:
             print(self.model, file=ckp.log_file)
             print(self.dual_models, file=ckp.log_file)
-        
-        # compute parameter
+
         num_parameter = self.count_parameters(self.model)
         ckp.write_log(f"The number of parameters is {num_parameter / 1000 ** 2:.2f}M")
 
@@ -90,7 +88,7 @@ class Model(nn.Module):
                 target.state_dict(),
                 os.path.join(path, 'model', 'model_best.pt')
             )
-        #### save dual models ####
+
         dual_models = []
         for i in range(len(self.dual_models)):
             dual_models.append(self.get_dual_model(i).state_dict())
@@ -109,14 +107,14 @@ class Model(nn.Module):
             kwargs = {'map_location': lambda storage, loc: storage}
         else:
             kwargs = {}
-        #### load primal model ####
+
         if pre_train != '.':
             print('Loading model from {}'.format(pre_train))
             self.get_model().load_state_dict(
                 torch.load(pre_train, **kwargs),
                 strict=False
             )
-        #### load dual model ####
+
         if pre_train_dual != '.':
             print('Loading dual model from {}'.format(pre_train_dual))
             dual_models = torch.load(pre_train_dual, **kwargs)
